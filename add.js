@@ -65,69 +65,77 @@ async function submitAnimal() {
     const status = document.getElementById("status");
 
     if (code !== CONFIG.secretCode) {
-        alert("Wrong secret code!");
+        alert("Wrong code");
         return;
     }
 
-    if (selectedFiles.length === 0) {
-        alert("Please add at least one image.");
-        return;
-    }
-
-    status.innerText = "Uploading images...";
-    const imageUrls = [];
+    status.innerText = "Check console for debug info...";
 
     try {
         // 1. Upload Images
+        const imageUrls = [];
         for (const file of selectedFiles) {
-            const res = await githubPut(file.name, `Upload image ${file.name}`, file.content);
-            if (res.message && !res.content) throw new Error("Image upload failed: " + res.message);
+            console.log("Uploading image:", file.name);
+            await githubPut(file.name, `Upload image ${file.name}`, file.content);
             imageUrls.push(file.name);
         }
 
-        // 2. Get the current animals.json
-        status.innerText = "Updating database...";
+        // 2. Get animals.json
+        console.log("Step 2: Fetching data/animals.json from GitHub...");
         const jsonPath = "data/animals.json";
         const fileData = await githubGet(jsonPath);
-        
-        // --- IMPROVED DECODING BLOCK ---
-        // 1. Remove ALL whitespace (newlines, tabs, spaces)
-        const base64Clean = fileData.content.replace(/\s/g, '');
-        
-        // 2. Use fetch + Data URI to decode (Handles UTF-8 and bad formatting better than atob)
-        const dataUri = `data:application/json;base64,${base64Clean}`;
-        const response = await fetch(dataUri);
-        const currentAnimals = await response.json();
-        // -------------------------------
 
-        // 3. Add the new animal
-        const newAnimal = {
-            scientific: document.getElementById("scientific").value,
-            common: document.getElementById("common").value.split(",").map(x => x.trim()).filter(x => x),
-            description: document.getElementById("description").value,
-            wikipedia: document.getElementById("wiki").value,
-            images: imageUrls
-        };
+        console.log("RAW CONTENT FROM GITHUB:", fileData.content);
 
-        currentAnimals.push(newAnimal);
+        // --- DEBUG DECODING ---
+        // 1. Clean the string
+        const base64Clean = fileData.content.replace(/\s/g, ''); 
+        console.log("CLEANED BASE64 (No whitespace):", base64Clean);
 
-        // 4. Update JSON on GitHub
-        // Safely encode UTF-8 to Base64
-        const updatedJson = JSON.stringify(currentAnimals, null, 2);
-        const encodedJson = btoa(unescape(encodeURIComponent(updatedJson)));
-        
-        const updateRes = await githubPut(jsonPath, `Add animal ${newAnimal.scientific}`, encodedJson, fileData.sha);
-        
-        if (updateRes.message && !updateRes.content) {
-             throw new Error("JSON update failed: " + updateRes.message);
+        try {
+            // 2. Try the Data URI method (Better for UTF-8)
+            console.log("Attempting decode via Data URI...");
+            const dataUri = `data:application/json;base64,${base64Clean}`;
+            const response = await fetch(dataUri);
+            
+            if (!response.ok) {
+                throw new Error("Data URI fetch failed. The Base64 might be corrupt.");
+            }
+
+            const currentAnimals = await response.json();
+            console.log("SUCCESSFULLY DECODED JSON:", currentAnimals);
+
+            // 3. Add the new animal
+            const newAnimal = {
+                scientific: document.getElementById("scientific").value,
+                common: document.getElementById("common").value.split(",").map(x => x.trim()).filter(x => x),
+                description: document.getElementById("description").value,
+                wikipedia: document.getElementById("wiki").value,
+                images: imageUrls
+            };
+
+            currentAnimals.push(newAnimal);
+
+            // 4. Update GitHub
+            console.log("Step 4: Encoding updated list and pushing to GitHub...");
+            const jsonString = JSON.stringify(currentAnimals, null, 2);
+            const encodedJson = btoa(unescape(encodeURIComponent(jsonString)));
+            
+            await githubPut(jsonPath, `Add animal ${newAnimal.scientific}`, encodedJson, fileData.sha);
+
+            status.innerText = "Animal added successfully!";
+            setTimeout(() => window.location.href = "index.html", 2000);
+
+        } catch (decodeError) {
+            console.error("DECODE FAILED:", decodeError);
+            // Fallback: If Data URI fails, let's see what atob thinks
+            console.log("Manual atob attempt:", atob(base64Clean));
+            throw decodeError;
         }
 
-        status.innerText = "Success! Animal added.";
-        setTimeout(() => window.location.href = "index.html", 2000);
-
     } catch (err) {
-        console.error(err);
-        status.innerText = "Error: " + err.message;
+        console.error("FINAL ERROR:", err);
+        status.innerText = "Error: " + err.message + " (Check Console)";
     }
 }
 
