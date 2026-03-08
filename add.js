@@ -1,7 +1,7 @@
 //get code from .env
 
 const CONFIG = {
-    token: import.meta.env.VITE_GITHUB_TOKEN,
+    token: localStorage.getItem("github_token"),
     owner: "ambrosia04",
     repo: "animal-encylopedia",
     secretCode: "mysecretcode"
