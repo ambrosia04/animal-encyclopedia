@@ -68,16 +68,11 @@ async function submitAnimal() {
         return;
     }
 
-    if (selectedFiles.length === 0) {
-        alert("Please add at least one image.");
-        return;
-    }
-
     status.innerText = "Uploading images...";
     const imageUrls = [];
 
     try {
-        // 1. Upload each image to the /images folder
+        // 1. Upload Images
         for (const file of selectedFiles) {
             await githubPut(file.name, `Upload image ${file.name}`, file.content);
             imageUrls.push(file.name);
@@ -87,7 +82,10 @@ async function submitAnimal() {
         status.innerText = "Updating database...";
         const jsonPath = "data/animals.json";
         const fileData = await githubGet(jsonPath);
-        const currentAnimals = JSON.parse(atob(fileData.content));
+        
+        // FIX: Remove newlines and handle UTF-8 decoding
+        const decodedContent = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ''))));
+        const currentAnimals = JSON.parse(decodedContent);
 
         // 3. Add the new animal
         const newAnimal = {
@@ -100,11 +98,14 @@ async function submitAnimal() {
 
         currentAnimals.push(newAnimal);
 
-        // 4. Push updated JSON back to GitHub
-        const updatedJsonBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(currentAnimals, null, 2))));
-        await githubPut(jsonPath, `Add animal ${newAnimal.scientific}`, updatedJsonBase64, fileData.sha);
+        // 4. Update JSON on GitHub
+        // FIX: Handle UTF-8 encoding for the update
+        const updatedJson = JSON.stringify(currentAnimals, null, 2);
+        const encodedJson = btoa(unescape(encodeURIComponent(updatedJson)));
+        
+        await githubPut(jsonPath, `Add animal ${newAnimal.scientific}`, encodedJson, fileData.sha);
 
-        status.innerText = "Success! Animal added to GitHub.";
+        status.innerText = "Success! Animal added.";
         setTimeout(() => window.location.href = "index.html", 2000);
 
     } catch (err) {
