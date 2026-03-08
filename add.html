@@ -1,36 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Add Animal</title>
-    <link rel="stylesheet" href="style.css">
+<title>Add Animal</title>
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-    <h1>Add Animal</h1>
-    
-    <input id="code" type="password" placeholder="Secret code">
-    <br><br>
-    <input id="scientific" placeholder="Scientific name">
-    <br><br>
-    <input id="common" placeholder="Common names (comma separated)">
-    <br><br>
-    <textarea id="description" placeholder="Description"></textarea>
-    <br><br>
-    <input id="wiki" placeholder="Wikipedia link">
+<h1>Add Animal</h1>
 
-    <h3>Images</h3>
-    <div id="image-grid" class="image-grid">
-        <!-- Initial Drop Zone -->
-        <div class="drop-zone" onclick="triggerInput(this)">
-            <span>+ Add Image</span>
-            <input type="file" accept="image/*" onchange="handleFile(this)" style="display:none">
-        </div>
+<input id="code" type="password" placeholder="Secret code">
+
+<br><br>
+
+<input id="scientific" placeholder="Scientific name">
+
+<br><br>
+
+<input id="common" placeholder="Common names (comma separated)">
+
+<br><br>
+
+<textarea id="description" placeholder="Description"></textarea>
+
+<br><br>
+
+<input id="wiki" placeholder="Wikipedia link">
+
+<h3>Images</h3>
+
+<div id="image-grid">
+    <div class="drop-zone plus-zone">
+        <span>+</span>
+        <input type="file" accept="image/*" hidden>
     </div>
+</div>
 
-    <br><br>
-    <button id="submit-btn" onclick="submitAnimal()">Submit to GitHub</button>
-    <p id="status"></p>
+<br><br>
 
-    <script src="add.js"></script>
+<button id="submit-btn">Submit to GitHub</button>
+
+<p id="status"></p>
+
+<script type="module" src="add.js"></script>
+
 </body>
 </html>
