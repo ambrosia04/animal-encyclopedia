@@ -1,47 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Add Animal</title>
-<link rel="stylesheet" href="style.css">
+    <title>Add Animal</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<h1>Add Animal</h1>
+    <h1>Add Animal</h1>
+    <div class="form-group">
+        <input id="code" type="password" placeholder="Secret code">
+        <br><br>
+        <input id="scientific" placeholder="Scientific name (e.g. Panthera leo)">
+        <br><br>
+        <input id="common" placeholder="Common names (comma separated)">
+        <br><br>
+        <textarea id="description" placeholder="Description"></textarea>
+        <br><br>
+        <input id="wiki" placeholder="Wikipedia link">
+    </div>
 
-<input id="code" placeholder="Secret code">
+    <h3>Images</h3>
+    <div id="image-grid" class="image-grid">
+        <!-- First drop zone -->
+        <div class="drop-zone" onclick="triggerInput(this)">
+            <span>Drag & Drop or Click to Upload</span>
+            <input type="file" accept="image/*" onchange="handleFile(this)" style="display:none">
+        </div>
+    </div>
 
-<br><br>
+    <br><br>
+    <button id="submit-btn" onclick="submitAnimal()">Submit to GitHub</button>
+    <p id="status"></p>
 
-<input id="scientific" placeholder="Scientific name">
-
-<br><br>
-
-<input id="common" placeholder="Common names (comma separated)">
-
-<br><br>
-
-<textarea id="description" placeholder="Description"></textarea>
-
-<br><br>
-
-<input id="wiki" placeholder="Wikipedia link">
-
-<br><br>
-
-<div id="imageContainer">
-<input class="imageInput" placeholder="Image URL">
-</div>
-
-<button onclick="addImage()">Add another image</button>
-
-<br><br>
-
-<button onclick="submitAnimal()">Submit</button>
-
-<p id="status"></p>
-
-<script src="add.js"></script>
-
+    <script src="add.js"></script>
 </body>
 </html>

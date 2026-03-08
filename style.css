@@ -29,3 +29,50 @@ img{
 max-width:300px;
 margin:10px;
 }
+.image-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px;
+}
+
+.drop-zone {
+    width: 150px;
+    height: 150px;
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: #f9f9f9;
+    position: relative;
+    overflow: hidden;
+    color: #666;
+    font-size: 12px;
+    transition: 0.3s;
+}
+
+.drop-zone:hover {
+    background: #e0e0e0;
+}
+
+.drop-zone img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    margin: 0;
+}
+
+.plus-zone {
+    font-size: 40px;
+    font-weight: bold;
+    color: #4CAF50;
+    border: 2px solid #4CAF50;
+}
+
+textarea {
+    width: 300px;
+    height: 100px;
+}
