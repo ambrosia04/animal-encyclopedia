@@ -1,48 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Add Animal</title>
-<link rel="stylesheet" href="style.css">
+    <title>Add Animal</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<h1>Add Animal</h1>
-
-<input id="code" type="password" placeholder="Secret code">
-
-<br><br>
-
-<input id="scientific" placeholder="Scientific name">
-
-<br><br>
-
-<input id="common" placeholder="Common names (comma separated)">
-
-<br><br>
-
-<textarea id="description" placeholder="Description"></textarea>
-
-<br><br>
-
-<input id="wiki" placeholder="Wikipedia link">
-
-<h3>Images</h3>
-
-<div id="image-grid">
-    <div class="drop-zone plus-zone">
-        <span>+</span>
-        <input type="file" accept="image/*" hidden>
+    <h1>Add Animal</h1>
+    <div class="form-group">
+        <input id="code" type="password" placeholder="Secret code">
+        <br><br>
+        <input id="scientific" placeholder="Scientific name">
+        <br><br>
+        <input id="common" placeholder="Common names (comma separated)">
+        <br><br>
+        <textarea id="description" placeholder="Description"></textarea>
+        <br><br>
+        <input id="wiki" placeholder="Wikipedia link">
     </div>
-</div>
 
-<br><br>
+    <h3>Images</h3>
+    <div id="image-grid" class="image-grid">
+        <!-- First drop zone -->
+        <div class="drop-zone plus-zone">
+            <span>Drag & Drop or Click to Upload</span>
+            <input type="file" accept="image/*" style="display:none">
+        </div>
+    </div>
 
-<button id="submit-btn">Submit to GitHub</button>
+    <br><br>
+    <button id="submit-btn">Submit to GitHub</button>
+    <p id="status"></p>
 
-<p id="status"></p>
-
-<script type="module" src="add.js"></script>
+    <!-- Use type="module" so we can use your config.js -->
+    <script type="module" src="add.js"></script>
 
 </body>
 </html>

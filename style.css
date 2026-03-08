@@ -41,17 +41,10 @@ margin:10px;
     width: 150px;
     height: 150px;
     border: 2px dashed #ccc;
-    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    background: #f9f9f9;
-    position: relative;
-    overflow: hidden;
-    color: #666;
-    font-size: 12px;
-    transition: 0.3s;
 }
 
 .drop-zone:hover {
@@ -66,8 +59,8 @@ margin:10px;
 }
 
 .drop-zone.dragging{
-border-color:#0077ff;
-background:#eef4ff;
+    border-color:#0077ff;
+    background:#eef4ff;
 }
 
 .plus-zone {

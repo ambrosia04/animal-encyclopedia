@@ -1,241 +1,160 @@
-import { CODE } from './config.js';
+import config from "./config.js";
 
 const CONFIG = {
-    token: CODE,
+    token: config.token,
     owner: "ambrosia04",
     repo: "animal-encylopedia",
     secretCode: "mysecretcode"
 };
 
-let selectedFiles = [];
+let selectedFiles = []; 
+const imageGrid = document.getElementById('image-grid');
 
-const grid = document.getElementById("image-grid");
-const submitBtn = document.getElementById("submit-btn");
+// --- IMAGE SELECTION LOGIC ---
 
-init();
+// 1. Handle Clicks on the grid (to open file browser)
+imageGrid.addEventListener('click', (e) => {
+    const zone = e.target.closest('.plus-zone');
+    if (zone) {
+        zone.querySelector('input').click();
+    }
+});
 
-function init(){
+// 2. Handle File selection (after click)
+imageGrid.addEventListener('change', (e) => {
+    if (e.target.tagName === 'INPUT') {
+        handleFile(e.target);
+    }
+});
 
-    const firstZone = grid.querySelector(".drop-zone");
+// 3. Handle Drag and Drop
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => {
+    e.preventDefault();
+    const zone = e.target.closest('.plus-zone');
+    if (zone && e.dataTransfer.files.length > 0) {
+        const input = zone.querySelector('input');
+        input.files = e.dataTransfer.files;
+        handleFile(input);
+    }
+});
 
-    setupZone(firstZone);
-
-    submitBtn.addEventListener("click", submitAnimal);
-
-}
-
-function setupZone(zone){
-
-    const input = zone.querySelector("input");
-
-    zone.addEventListener("click", ()=>input.click());
-
-    input.addEventListener("change", ()=>handleFile(input, zone));
-
-    zone.addEventListener("dragover", e => {
-        e.preventDefault();
-        zone.classList.add("dragging");
-    });
-
-    zone.addEventListener("dragleave", ()=>{
-        zone.classList.remove("dragging");
-    });
-
-    zone.addEventListener("drop", e => {
-
-        e.preventDefault();
-        zone.classList.remove("dragging");
-
-        const file = e.dataTransfer.files[0];
-        if(!file) return;
-
-        processFile(file, zone);
-
-    });
-
-}
-
-function handleFile(input, zone){
-
+function handleFile(input) {
     const file = input.files[0];
-    if(!file) return;
-
-    processFile(file, zone);
-
-}
-
-function processFile(file, zone){
+    if (!file) return;
 
     const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64Data = e.target.result.split(',')[1];
+        const previewUrl = e.target.result;
 
-    reader.onload = e => {
-
-        const preview = e.target.result;
-        const base64Data = preview.split(",")[1];
-
-        const img = document.createElement("img");
-        img.src = preview;
-        img.style.width = "100%";
-        img.style.height = "100%";
-        img.style.objectFit = "cover";
-        img.style.borderRadius = "8px";
-
-        zone.innerHTML = "";
-        zone.appendChild(img);
-
+        // Display the image in the current box
+        const zone = input.parentElement;
+        zone.classList.remove('plus-zone');
+        zone.innerHTML = `<img src="${previewUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">`;
+        
+        // Save the data for upload
         selectedFiles.push({
-            name: `images/${Date.now()}-${file.name.replace(/\s+/g,"_")}`,
+            name: `images/${Date.now()}-${file.name.replace(/\s+/g, '_')}`,
             content: base64Data
         });
 
+        // Add a NEW "+" box next to it
         addNewDropZone();
-
     };
-
     reader.readAsDataURL(file);
-
 }
 
-function addNewDropZone(){
-
-    const zone = document.createElement("div");
-
-    zone.className = "drop-zone plus-zone";
-
-    zone.innerHTML = `
+function addNewDropZone() {
+    const newZone = document.createElement('div');
+    newZone.className = 'drop-zone plus-zone';
+    newZone.innerHTML = `
         <span>+</span>
-        <input type="file" accept="image/*" hidden>
+        <input type="file" accept="image/*" style="display:none">
     `;
-
-    grid.appendChild(zone);
-
-    setupZone(zone);
-
+    imageGrid.appendChild(newZone);
 }
 
-async function submitAnimal(){
+// --- GITHUB SUBMISSION LOGIC ---
 
+document.getElementById('submit-btn').onclick = async function() {
     const code = document.getElementById("code").value;
     const status = document.getElementById("status");
 
-    if(code !== CONFIG.secretCode){
-        alert("Wrong code");
+    if (code !== CONFIG.secretCode) {
+        alert("Wrong secret code!");
         return;
     }
 
-    if(selectedFiles.length === 0){
-        alert("Add at least one image");
+    if (selectedFiles.length === 0) {
+        alert("Please add at least one image.");
         return;
     }
 
     status.innerText = "Uploading images...";
-
     const imageUrls = [];
 
-    try{
-
-        for(const file of selectedFiles){
-
-            await githubPut(file.name, `Upload image ${file.name}`, file.content);
-
+    try {
+        // 1. Upload Images
+        for (const file of selectedFiles) {
+            await githubPut(file.name, `Upload ${file.name}`, file.content);
             imageUrls.push(file.name);
-
         }
 
+        // 2. Get animals.json
         status.innerText = "Updating database...";
-
         const jsonPath = "data/animals.json";
-
         const fileData = await githubGet(jsonPath);
 
-        const base64Clean = fileData.content.replace(/\s/g,"");
-        const json = atob(base64Clean);
+        // --- FIX: The atob Error Fix ---
+        // 1. Remove all whitespace/newlines from GitHub's Base64
+        const base64Clean = fileData.content.replace(/\s/g, '');
+        // 2. Convert to Byte array to handle special characters (UTF-8)
+        const bytes = Uint8Array.from(atob(base64Clean), c => c.charCodeAt(0));
+        const currentAnimals = JSON.parse(new TextDecoder().decode(bytes));
+        // -------------------------------
 
-        const currentAnimals = JSON.parse(json);
-
+        // 3. Add the new animal
         const newAnimal = {
-
             scientific: document.getElementById("scientific").value,
-
-            common: document.getElementById("common").value
-                .split(",")
-                .map(x=>x.trim())
-                .filter(x=>x),
-
+            common: document.getElementById("common").value.split(",").map(x => x.trim()).filter(x => x),
             description: document.getElementById("description").value,
-
             wikipedia: document.getElementById("wiki").value,
-
             images: imageUrls
-
         };
-
         currentAnimals.push(newAnimal);
 
-        currentAnimals.sort((a,b)=>
-            a.scientific.localeCompare(b.scientific)
-        );
+        // 4. Push back to GitHub (Safe UTF-8 encoding)
+        const updatedJson = JSON.stringify(currentAnimals, null, 2);
+        const encodedJson = btoa(unescape(encodeURIComponent(updatedJson)));
+        
+        await githubPut(jsonPath, `Add animal ${newAnimal.scientific}`, encodedJson, fileData.sha);
 
-        const updatedJson = JSON.stringify(currentAnimals,null,2);
-        const encoded = btoa(unescape(encodeURIComponent(updatedJson)));
+        status.innerText = "Success! Animal added to GitHub.";
+        setTimeout(() => window.location.href = "index.html", 2500);
 
-        await githubPut(
-            jsonPath,
-            `Add animal ${newAnimal.scientific}`,
-            encoded,
-            fileData.sha
-        );
-
-        status.innerText = "Success! Site updates in ~1 minute.";
-
-        setTimeout(()=>location.href="index.html",2500);
-
-    }
-    catch(err){
-
+    } catch (err) {
         console.error(err);
-
         status.innerText = "Error: " + err.message;
-
     }
+};
 
+// API Helpers
+async function githubGet(path) {
+    const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
+    const res = await fetch(url, { headers: { "Authorization": `token ${CONFIG.token}` } });
+    if (!res.ok) throw new Error("Could not find file: " + path);
+    return res.json();
 }
 
-async function githubGet(path){
-
+async function githubPut(path, message, content, sha = null) {
     const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
-
-    const res = await fetch(url,{
-        headers:{
-            Authorization:`token ${CONFIG.token}`
-        }
+    const body = { message, content };
+    if (sha) body.sha = sha;
+    const res = await fetch(url, {
+        method: "PUT",
+        headers: { "Authorization": `token ${CONFIG.token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body)
     });
-
-    if(!res.ok) throw new Error("Could not find " + path);
-
     return res.json();
-
-}
-
-async function githubPut(path,message,content,sha=null){
-
-    const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
-
-    const body = {message,content};
-
-    if(sha) body.sha = sha;
-
-    const res = await fetch(url,{
-        method:"PUT",
-        headers:{
-            Authorization:`token ${CONFIG.token}`,
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify(body)
-    });
-
-    if(!res.ok) throw new Error("GitHub upload failed");
-
-    return res.json();
-
 }
