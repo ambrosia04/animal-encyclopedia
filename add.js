@@ -36,6 +36,8 @@ function setupZone(zone){
 
     input.addEventListener("change", ()=>handleFile(input, zone));
 
+    zone.addEventListener("dragover", e => e.preventDefault());
+
 }
 
 function handleFile(input, zone){

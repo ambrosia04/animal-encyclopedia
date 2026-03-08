@@ -29,34 +29,40 @@ img{
 max-width:300px;
 margin:10px;
 }
-
-#image-grid{
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
+.image-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px;
 }
 
-.drop-zone{
-    width:120px;
-    height:120px;
-    border:2px dashed #999;
-    border-radius:8px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    cursor:pointer;
-    font-size:40px;
+.drop-zone {
+    width: 150px;
+    height: 150px;
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: #f9f9f9;
+    position: relative;
+    overflow: hidden;
+    color: #666;
+    font-size: 12px;
+    transition: 0.3s;
 }
 
 .drop-zone:hover {
     background: #e0e0e0;
 }
 
-.drop-zone img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    border-radius:8px;
+.drop-zone img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    margin: 0;
 }
 
 .plus-zone {
