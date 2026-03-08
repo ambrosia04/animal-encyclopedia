@@ -69,13 +69,19 @@ async function submitAnimal() {
         return;
     }
 
+    if (selectedFiles.length === 0) {
+        alert("Please add at least one image.");
+        return;
+    }
+
     status.innerText = "Uploading images...";
     const imageUrls = [];
 
     try {
         // 1. Upload Images
         for (const file of selectedFiles) {
-            await githubPut(file.name, `Upload image ${file.name}`, file.content);
+            const res = await githubPut(file.name, `Upload image ${file.name}`, file.content);
+            if (res.message && !res.content) throw new Error("Image upload failed: " + res.message);
             imageUrls.push(file.name);
         }
 
@@ -84,14 +90,20 @@ async function submitAnimal() {
         const jsonPath = "data/animals.json";
         const fileData = await githubGet(jsonPath);
         
-        // FIX: Remove newlines and handle UTF-8 decoding
-        const decodedContent = decodeURIComponent(escape(atob(fileData.content.replace(/\n/g, ''))));
-        const currentAnimals = JSON.parse(decodedContent);
+        // --- IMPROVED DECODING BLOCK ---
+        // 1. Remove ALL whitespace (newlines, tabs, spaces)
+        const base64Clean = fileData.content.replace(/\s/g, '');
+        
+        // 2. Use fetch + Data URI to decode (Handles UTF-8 and bad formatting better than atob)
+        const dataUri = `data:application/json;base64,${base64Clean}`;
+        const response = await fetch(dataUri);
+        const currentAnimals = await response.json();
+        // -------------------------------
 
         // 3. Add the new animal
         const newAnimal = {
             scientific: document.getElementById("scientific").value,
-            common: document.getElementById("common").value.split(",").map(x => x.trim()),
+            common: document.getElementById("common").value.split(",").map(x => x.trim()).filter(x => x),
             description: document.getElementById("description").value,
             wikipedia: document.getElementById("wiki").value,
             images: imageUrls
@@ -100,11 +112,15 @@ async function submitAnimal() {
         currentAnimals.push(newAnimal);
 
         // 4. Update JSON on GitHub
-        // FIX: Handle UTF-8 encoding for the update
+        // Safely encode UTF-8 to Base64
         const updatedJson = JSON.stringify(currentAnimals, null, 2);
         const encodedJson = btoa(unescape(encodeURIComponent(updatedJson)));
         
-        await githubPut(jsonPath, `Add animal ${newAnimal.scientific}`, encodedJson, fileData.sha);
+        const updateRes = await githubPut(jsonPath, `Add animal ${newAnimal.scientific}`, encodedJson, fileData.sha);
+        
+        if (updateRes.message && !updateRes.content) {
+             throw new Error("JSON update failed: " + updateRes.message);
+        }
 
         status.innerText = "Success! Animal added.";
         setTimeout(() => window.location.href = "index.html", 2000);
@@ -115,12 +131,13 @@ async function submitAnimal() {
     }
 }
 
-// GitHub API Helpers
+// GitHub API Helpers (Updated to handle errors better)
 async function githubGet(path) {
     const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
     const res = await fetch(url, {
         headers: { "Authorization": `token ${CONFIG.token}` }
     });
+    if (!res.ok) throw new Error(`Could not find file: ${path}. Make sure it exists!`);
     return res.json();
 }
 
