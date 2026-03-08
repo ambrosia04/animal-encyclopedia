@@ -1,0 +1,29 @@
+[
+  {
+    "scientific": "Ailuropoda melanoleuca",
+    "common": ["Giant Panda", "Panda Bear"],
+    "description": "A bear native to China known for its black and white coat.",
+    "wikipedia": "https://en.wikipedia.org/wiki/Giant_panda",
+    "images": [
+      "images/panda1.jpg",
+      "images/panda2.jpg"
+    ]
+  },
+  {
+    "scientific": "Panthera tigris",
+    "common": ["Tiger"],
+    "description": "The largest species among the Felidae and classified in the genus Panthera.",
+    "wikipedia": "https://en.wikipedia.org/wiki/Tiger",
+    "images": [
+      "images/tiger1.jpg",
+      "images/tiger2.jpg"
+    ]
+  },
+  {
+    "scientific": "Canis lupus",
+    "common": ["Gray Wolf", "Wolf"],
+    "description": "A large canine native to Eurasia and North America.",
+    "wikipedia": "https://en.wikipedia.org/wiki/Gray_wolf",
+    "images": ["images/wolf1.jpg"]
+    }
+]

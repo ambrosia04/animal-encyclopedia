@@ -1,0 +1,31 @@
+body{
+font-family: Arial;
+text-align: center;
+margin:40px;
+background-color: #547246;
+}
+
+header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+#suggestions{
+list-style:none;
+padding:0;
+}
+
+#suggestions li{
+padding:6px;
+cursor:pointer;
+}
+
+#suggestions li:hover{
+background:#eee;
+}
+
+img{
+max-width:300px;
+margin:10px;
+}

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Add Animal</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<h1>Add Animal</h1>
+
+<input id="code" placeholder="Secret code">
+
+<br><br>
+
+<input id="scientific" placeholder="Scientific name">
+
+<br><br>
+
+<input id="common" placeholder="Common names (comma separated)">
+
+<br><br>
+
+<textarea id="description" placeholder="Description"></textarea>
+
+<br><br>
+
+<input id="wiki" placeholder="Wikipedia link">
+
+<br><br>
+
+<div id="imageContainer">
+<input class="imageInput" placeholder="Image URL">
+</div>
+
+<button onclick="addImage()">Add another image</button>
+
+<br><br>
+
+<button onclick="submitAnimal()">Submit</button>
+
+<p id="status"></p>
+
+<script src="add.js"></script>
+
+</body>
+</html>
