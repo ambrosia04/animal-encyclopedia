@@ -1,7 +1,7 @@
-import config from "./config.js";
+//get code from .env
 
 const CONFIG = {
-    token: config.token,
+    token: import.meta.env.VITE_GITHUB_TOKEN,
     owner: "ambrosia04",
     repo: "animal-encylopedia",
     secretCode: "mysecretcode"
