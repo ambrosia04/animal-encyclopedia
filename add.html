@@ -7,23 +7,22 @@
 <body>
 
     <h1>Add Animal</h1>
-    <div class="form-group">
-        <input id="code" type="password" placeholder="Secret code">
-        <br><br>
-        <input id="scientific" placeholder="Scientific name (e.g. Panthera leo)">
-        <br><br>
-        <input id="common" placeholder="Common names (comma separated)">
-        <br><br>
-        <textarea id="description" placeholder="Description"></textarea>
-        <br><br>
-        <input id="wiki" placeholder="Wikipedia link">
-    </div>
+    
+    <input id="code" type="password" placeholder="Secret code">
+    <br><br>
+    <input id="scientific" placeholder="Scientific name">
+    <br><br>
+    <input id="common" placeholder="Common names (comma separated)">
+    <br><br>
+    <textarea id="description" placeholder="Description"></textarea>
+    <br><br>
+    <input id="wiki" placeholder="Wikipedia link">
 
     <h3>Images</h3>
     <div id="image-grid" class="image-grid">
-        <!-- First drop zone -->
+        <!-- Initial Drop Zone -->
         <div class="drop-zone" onclick="triggerInput(this)">
-            <span>Drag & Drop or Click to Upload</span>
+            <span>+ Add Image</span>
             <input type="file" accept="image/*" onchange="handleFile(this)" style="display:none">
         </div>
     </div>

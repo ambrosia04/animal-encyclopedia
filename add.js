@@ -5,13 +5,15 @@ const CONFIG = {
     repo: "animal-encylopedia", // Your repository name
     secretCode: "mysecretcode"
 };
+let selectedFiles = []; 
 
-let selectedFiles = []; // Stores { name, base64 }
-
+// 1. CLICK TO OPEN FILE EXPLORER
 function triggerInput(el) {
-    el.querySelector('input').click();
+    const input = el.querySelector('input');
+    if (input) input.click();
 }
 
+// 2. HANDLE FILE SELECTION (Click or Drop)
 function handleFile(input) {
     const file = input.files[0];
     if (!file) return;
@@ -21,22 +23,25 @@ function handleFile(input) {
         const base64Data = e.target.result.split(',')[1];
         const previewUrl = e.target.result;
 
-        // Display the image in the current box
+        // Update the current box to show the image
         const zone = input.parentElement;
-        zone.innerHTML = `<img src="${previewUrl}">`;
+        zone.classList.remove('plus-zone');
+        zone.onclick = null; // Disable clicking this specific image to change it
+        zone.innerHTML = `<img src="${previewUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:8px;">`;
         
-        // Save the data
+        // Save to our array
         selectedFiles.push({
-            name: `images/${Date.now()}-${file.name}`,
+            name: `images/${Date.now()}-${file.name.replace(/\s+/g, '_')}`,
             content: base64Data
         });
 
-        // Add a NEW "+" box next to it
+        // Add a NEW "+" box
         addNewDropZone();
     };
     reader.readAsDataURL(file);
 }
 
+// 3. ADD NEW "+" BOX
 function addNewDropZone() {
     const grid = document.getElementById('image-grid');
     const newZone = document.createElement('div');
@@ -49,17 +54,21 @@ function addNewDropZone() {
     grid.appendChild(newZone);
 }
 
-// Drag and drop listeners
+// 4. DRAG AND DROP LOGIC
 document.addEventListener('dragover', e => e.preventDefault());
 document.addEventListener('drop', e => {
     e.preventDefault();
-    if (e.target.closest('.drop-zone')) {
-        const input = e.target.closest('.drop-zone').querySelector('input');
-        input.files = e.dataTransfer.files;
-        handleFile(input);
+    const zone = e.target.closest('.drop-zone');
+    if (zone) {
+        const input = zone.querySelector('input');
+        if (input) {
+            input.files = e.dataTransfer.files;
+            handleFile(input);
+        }
     }
 });
 
+// 5. SUBMIT TO GITHUB
 async function submitAnimal() {
     const code = document.getElementById("code").value;
     const status = document.getElementById("status");
@@ -69,100 +78,72 @@ async function submitAnimal() {
         return;
     }
 
-    status.innerText = "Check console for debug info...";
+    if (selectedFiles.length === 0) {
+        alert("Please add at least one image");
+        return;
+    }
+
+    status.innerText = "Uploading images...";
+    const imageUrls = [];
 
     try {
-        // 1. Upload Images
-        const imageUrls = [];
+        // Upload images one by one
         for (const file of selectedFiles) {
-            console.log("Uploading image:", file.name);
             await githubPut(file.name, `Upload image ${file.name}`, file.content);
             imageUrls.push(file.name);
         }
 
-        // 2. Get animals.json
-        console.log("Step 2: Fetching data/animals.json from GitHub...");
+        status.innerText = "Updating database...";
         const jsonPath = "data/animals.json";
         const fileData = await githubGet(jsonPath);
+        
+        // Robust Decoding
+        const base64Clean = fileData.content.replace(/\s/g, '');
+        const dataUri = `data:application/json;base64,${base64Clean}`;
+        const response = await fetch(dataUri);
+        const currentAnimals = await response.json();
 
-        console.log("RAW CONTENT FROM GITHUB:", fileData.content);
+        // New Animal Data
+        const newAnimal = {
+            scientific: document.getElementById("scientific").value,
+            common: document.getElementById("common").value.split(",").map(x => x.trim()).filter(x => x),
+            description: document.getElementById("description").value,
+            wikipedia: document.getElementById("wiki").value,
+            images: imageUrls
+        };
 
-        // --- DEBUG DECODING ---
-        // 1. Clean the string
-        const base64Clean = fileData.content.replace(/\s/g, ''); 
-        console.log("CLEANED BASE64 (No whitespace):", base64Clean);
+        currentAnimals.push(newAnimal);
 
-        try {
-            // 2. Try the Data URI method (Better for UTF-8)
-            console.log("Attempting decode via Data URI...");
-            const dataUri = `data:application/json;base64,${base64Clean}`;
-            const response = await fetch(dataUri);
-            
-            if (!response.ok) {
-                throw new Error("Data URI fetch failed. The Base64 might be corrupt.");
-            }
+        // Robust Encoding
+        const updatedJson = JSON.stringify(currentAnimals, null, 2);
+        const encodedJson = btoa(unescape(encodeURIComponent(updatedJson)));
+        
+        await githubPut(jsonPath, `Add animal ${newAnimal.scientific}`, encodedJson, fileData.sha);
 
-            const currentAnimals = await response.json();
-            console.log("SUCCESSFULLY DECODED JSON:", currentAnimals);
-
-            // 3. Add the new animal
-            const newAnimal = {
-                scientific: document.getElementById("scientific").value,
-                common: document.getElementById("common").value.split(",").map(x => x.trim()).filter(x => x),
-                description: document.getElementById("description").value,
-                wikipedia: document.getElementById("wiki").value,
-                images: imageUrls
-            };
-
-            currentAnimals.push(newAnimal);
-
-            // 4. Update GitHub
-            console.log("Step 4: Encoding updated list and pushing to GitHub...");
-            const jsonString = JSON.stringify(currentAnimals, null, 2);
-            const encodedJson = btoa(unescape(encodeURIComponent(jsonString)));
-            
-            await githubPut(jsonPath, `Add animal ${newAnimal.scientific}`, encodedJson, fileData.sha);
-
-            status.innerText = "Animal added successfully!";
-            setTimeout(() => window.location.href = "index.html", 2000);
-
-        } catch (decodeError) {
-            console.error("DECODE FAILED:", decodeError);
-            // Fallback: If Data URI fails, let's see what atob thinks
-            console.log("Manual atob attempt:", atob(base64Clean));
-            throw decodeError;
-        }
+        status.innerText = "Success! Site will update in ~1 minute.";
+        setTimeout(() => window.location.href = "index.html", 2500);
 
     } catch (err) {
-        console.error("FINAL ERROR:", err);
-        status.innerText = "Error: " + err.message + " (Check Console)";
+        console.error(err);
+        status.innerText = "Error: " + err.message;
     }
 }
 
-// GitHub API Helpers (Updated to handle errors better)
+// HELPERS
 async function githubGet(path) {
     const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
-    const res = await fetch(url, {
-        headers: { "Authorization": `token ${CONFIG.token}` }
-    });
-    if (!res.ok) throw new Error(`Could not find file: ${path}. Make sure it exists!`);
+    const res = await fetch(url, { headers: { "Authorization": `token ${CONFIG.token}` } });
+    if (!res.ok) throw new Error("Could not find " + path);
     return res.json();
 }
 
 async function githubPut(path, message, content, sha = null) {
     const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
-    const body = {
-        message: message,
-        content: content
-    };
+    const body = { message, content };
     if (sha) body.sha = sha;
-
     const res = await fetch(url, {
         method: "PUT",
-        headers: {
-            "Authorization": `token ${CONFIG.token}`,
-            "Content-Type": "application/json"
-        },
+        headers: { "Authorization": `token ${CONFIG.token}`, "Content-Type": "application/json" },
         body: JSON.stringify(body)
     });
     return res.json();
