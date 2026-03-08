@@ -1,10 +1,6 @@
 const SECRET = "ambrosiaAnimalPage";
 
-const OWNER = "YOUR_GITHUB_USERNAME";
-const REPO = "animal-encyclopedia";
 const FILE = "data/animals.json";
-
-const TOKEN = "YOUR_GITHUB_TOKEN";
 
 function addImage(){
 
