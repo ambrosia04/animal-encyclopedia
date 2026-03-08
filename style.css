@@ -65,6 +65,11 @@ margin:10px;
     margin: 0;
 }
 
+.drop-zone.dragging{
+border-color:#0077ff;
+background:#eef4ff;
+}
+
 .plus-zone {
     font-size: 40px;
     font-weight: bold;

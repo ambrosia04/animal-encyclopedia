@@ -20,10 +20,6 @@ function init(){
 
     setupZone(firstZone);
 
-    document.addEventListener("dragover", e => e.preventDefault());
-
-    document.addEventListener("drop", handleDrop);
-
     submitBtn.addEventListener("click", submitAnimal);
 
 }
@@ -36,7 +32,26 @@ function setupZone(zone){
 
     input.addEventListener("change", ()=>handleFile(input, zone));
 
-    zone.addEventListener("dragover", e => e.preventDefault());
+    zone.addEventListener("dragover", e => {
+        e.preventDefault();
+        zone.classList.add("dragging");
+    });
+
+    zone.addEventListener("dragleave", ()=>{
+        zone.classList.remove("dragging");
+    });
+
+    zone.addEventListener("drop", e => {
+
+        e.preventDefault();
+        zone.classList.remove("dragging");
+
+        const file = e.dataTransfer.files[0];
+        if(!file) return;
+
+        processFile(file, zone);
+
+    });
 
 }
 
@@ -49,35 +64,24 @@ function handleFile(input, zone){
 
 }
 
-function handleDrop(e){
-
-    e.preventDefault();
-
-    const zone = e.target.closest(".drop-zone");
-
-    if(!zone) return;
-
-    const file = e.dataTransfer.files[0];
-
-    if(!file) return;
-
-    processFile(file, zone);
-
-}
-
 function processFile(file, zone){
 
     const reader = new FileReader();
 
     reader.onload = e => {
 
-        const base64Data = e.target.result.split(",")[1];
-
         const preview = e.target.result;
+        const base64Data = preview.split(",")[1];
 
-        zone.classList.remove("plus-zone");
+        const img = document.createElement("img");
+        img.src = preview;
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "cover";
+        img.style.borderRadius = "8px";
 
-        zone.innerHTML = `<img src="${preview}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">`;
+        zone.innerHTML = "";
+        zone.appendChild(img);
 
         selectedFiles.push({
             name: `images/${Date.now()}-${file.name.replace(/\s+/g,"_")}`,
@@ -112,7 +116,6 @@ function addNewDropZone(){
 async function submitAnimal(){
 
     const code = document.getElementById("code").value;
-
     const status = document.getElementById("status");
 
     if(code !== CONFIG.secretCode){
@@ -146,7 +149,6 @@ async function submitAnimal(){
         const fileData = await githubGet(jsonPath);
 
         const base64Clean = fileData.content.replace(/\s/g,"");
-
         const json = atob(base64Clean);
 
         const currentAnimals = JSON.parse(json);
@@ -175,7 +177,6 @@ async function submitAnimal(){
         );
 
         const updatedJson = JSON.stringify(currentAnimals,null,2);
-
         const encoded = btoa(unescape(encodeURIComponent(updatedJson)));
 
         await githubPut(
