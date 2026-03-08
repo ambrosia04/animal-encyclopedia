@@ -1,5 +1,6 @@
+import { CODE } from './config.js';
 const CONFIG = {
-    token: "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", // Create a token at github.com/settings/tokens
+    token: CODE, // get token from config.js
     owner: "ambrosia04", // Your GitHub username or org
     repo: "animal-encylopedia", // Your repository name
     secretCode: "mysecretcode"
